@@ -9,7 +9,7 @@ class Navbar extends Component {
         return (
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{marginBottom: "15px"}}>
                 <a className="navbar-brand" href="#">
-                    <img src={process.env.PUBLIC_URL + "/paratera.svg"} style={{height: "30px"}} />
+                    <img src={process.env.PUBLIC_URL + "/paratera.svg"}/>
                 </a>
                 <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
                     <span className="navbar-toggler-icon"></span>
