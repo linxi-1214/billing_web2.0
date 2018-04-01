@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import './bootstrap4.0_css/bootstrap.min.css'
-
+import { Tabs, Tab } from 'react-bootstrap';
 
 class Tr extends Component {
     constructor(props) {
@@ -19,7 +18,7 @@ class Tr extends Component {
         axios({
             url: '/api/manager/account/balance/',
             method: 'post',
-            data: qs.stringify(this.props.data),
+            data: qs.stringfy(this.props.data),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             }
@@ -47,7 +46,6 @@ class Tr extends Component {
                 this.state.db_data === this.state.check_data ? 'table-success' : 'table-danger' : this.state.className
             }>
                 <td>{this.state.collect_day}</td>
-                <td>{this.state.username}</td>
                 <td>{this.state.partition}</td>
                 <td>{this.state.db_data}</td>
                 <td>{this.state.check_data}</td>
@@ -135,36 +133,31 @@ class CheckForm extends Component {
 }
 
 class CheckTable extends Component {
-    // constructor(props) {
-    //     super(props);
-    //     this.state = {
-    //         collect_day: [],
-    //         cpu_data_db: [],
-    //         cpu_data_checked: []
-    //     }
-    // }
-
-    // componentDidMount() {
-    //     this.setState({
-    //         collect_day: ['2018-01-01', '2018-01-02'],
-    //         cpu_data_db: [239882, 289323],
-    //         cpu_data_checked: [291489, 289323]
-    //     })
-    // }
-    //
-    // componentWillUnmount() {
-    //     this.setState({})
-    // }
-
     render() {
         const data = this.props.data;
+        // Example:
+        // {
+        //     "p_cfd_01(1232)": {
+        //         "2018-01-01": {
+        //             "cluster_id": "GUANGZHOU",
+        //             "cluster_user_id": 1232,
+        //             "partition": [
+        //                 {
+        //                     "name": "paratea",
+        //                     "db_data": 12423,
+        //                     "check_data": 12423
+        //                 }
+        //             ]
+        //         }
+        //     }
+        // }
 
+        console.log(data);
         return (
             <table className={this.props.class}>
                 <thead>
                     <tr>
                         <td>校验日期</td>
-                        <td>用户名</td>
                         <td>分区</td>
                         <td>现存机时(S)</td>
                         <td>校验机时(S)</td>
@@ -173,8 +166,21 @@ class CheckTable extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                {data.map((user_data) =>
-                    <Tr key={user_data.collect_day + user_data.username + user_data.partition} data={user_data} />
+                {Object.keys(data).map((collect_day) => {
+                    var row_data = {
+                        "cluster_user_id": data[collect_day]['cluster_user_id'],
+                        "collect_day": collect_day
+                    };
+
+                    return data[collect_day]['partition'].map((partition_info) => {
+                            row_data['partition'] = partition_info['name'];
+                            row_data['db_data'] = partition_info['db_data'];
+                            row_data['check_data'] = partition_info['check_data'];
+
+                            return <Tr key={collect_day + row_data['partition']} data={row_data} />
+                        }
+                    )
+                }
                 )}
                 </tbody>
             </table>
@@ -184,21 +190,32 @@ class CheckTable extends Component {
 
 class SumTable extends Component {
     render() {
-        const data = this.props.summary_data;
-
-        var db_total = 0;
-        var check_total = 0;
-
-        data.map((user_data) => {
-            db_total += user_data.db_data_summary;
-            check_total += user_data.check_data_summary;
-        });
+        const data = this.props.data;
+        // Example:
+        // {
+        //     "p_cfd_01(1232)": {
+        //         "cluster_id": "GUANGZHOU",
+        //         "checked": {
+        //             "partition": {
+        //                 "paratera": 12423,
+        //                 "work": 232223
+        //             },
+        //             "total": 244646
+        //         },
+        //         "db": {
+        //             "partition": {
+        //                 "paratera": 12423,
+        //                 "work": 232223
+        //             },
+        //             "total": 244646
+        //         }
+        //     }
+        // }
 
         return (
             <table className={this.props.class}>
                 <thead>
                     <tr>
-                        <td>用户名</td>
                         <td>分区</td>
                         <td>现存机时汇总(S)</td>
                         <td>校验机时汇总(S)</td>
@@ -206,21 +223,16 @@ class SumTable extends Component {
                     </tr>
                 </thead>
                 <tbody>
-                {data.map((user_data) => {
+                {data.db !== undefined && Object.keys(data.db.partition).map((partition) => {
                     return (
-                        <tr key={user_data.username + user_data.partition}>
-                            <td>{user_data.username}</td>
-                            <td>{user_data.partition}</td>
-                            <td>{user_data.db_data_summary}</td>
-                            <td>{user_data.check_data_summary}</td>
-                            <td>{user_data.check_data_summary - user_data.db_data_summary}</td>
+                        <tr key={partition}>
+                            <td>{partition}</td>
+                            <td>{data.db['partition'][partition]}</td>
+                            <td>{data.checked['partition'][partition]}</td>
+                            <td>{data.checked['partition'][partition] - data.db['partition'][partition]}</td>
                         </tr>
                     )
-                    }
-                )}
-                <tr>
-                    <td></td>
-                </tr>
+                })}
                 </tbody>
             </table>
         )
@@ -231,10 +243,61 @@ class SumTable extends Component {
 class Page extends Component {
     constructor(props) {
         super(props);
+        // this.state = {
+        //     user_data: {
+        //         "detail": {},
+        //         "summary": {}
+        //     }
+        // };
         this.state = {
-            user_data: {
-                "summary_info": [],
-                "data": []
+            "user_data": {
+                "detail": {
+                    "p_cfd_01(1232)": {
+                        "2018-01-01": {
+                            "cluster_id": "GUANGZHOU",
+                            "cluster_user_id": 1232,
+                            "partition": [
+                                {
+                                    "name": "paratea",
+                                    "db_data": 12423,
+                                    "check_data": 12423
+                                }
+                            ]
+                        }
+                    },
+                    "p_cfd_02(1232)": {
+                        "2018-01-01": {
+                            "cluster_id": "GUANGZHOU",
+                            "cluster_user_id": 1232,
+                            "partition": [
+                                {
+                                    "name": "paratea",
+                                    "db_data": 12423,
+                                    "check_data": 12423
+                                }
+                            ]
+                        }
+                    }
+                },
+                "summary": {
+                    "p_cfd_01(1232)": {
+                        "cluster_id": "GUANGZHOU",
+                        "checked": {
+                            "partition": {
+                                "paratera": 12423,
+                                "work": 232223
+                            },
+                            "total": 244646
+                        },
+                        "db": {
+                            "partition": {
+                                "paratera": 12423,
+                                "work": 232223
+                            },
+                            "total": 244646
+                        }
+                    }
+                }
             }
         };
         this.onSubmit = this.onSubmit.bind(this);
@@ -252,8 +315,14 @@ class Page extends Component {
                 <div className="alert alert-secondary">
                     <CheckForm onSubmit={this.onSubmit}/>
                 </div>
-                <SumTable class="table table-bordered" summary_data={this.state.user_data.summary_info}/>
-                <CheckTable class="table table-bordered" data={this.state.user_data.data}/>
+                <SumTable class="table table-bordered" data={this.state.user_data.summary}/>
+                <Tabs id={"user-cpu-detail"} defaultActiveKey={0}>
+                    {Object.keys(this.state.user_data.detail).map((username, index) =>
+                        <Tab key={username} bsClass="nav-item" eventKey={index} title={username}>
+                            <CheckTable class="table table-bordered" data={this.state.user_data.detail[username]}/>
+                        </Tab>
+                    )}
+                </Tabs>
             </div>
         )
     }
