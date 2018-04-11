@@ -68,10 +68,12 @@ class CheckForm extends Component {
         this.state = {
             url: "/api/manager/cpu-check/",
             user_list: [],
-            selectedOption: ""
+            selectedOption: "",
+            posts: {}
         };
         this.onSubmit = this.onSubmit.bind(this);
         this.handleSelectChange = this.handleSelectChange.bind(this);
+        this.handleInputChange = this.handleInputChange.bind(this);
     }
 
     componentDidMount() {
@@ -83,35 +85,34 @@ class CheckForm extends Component {
             }
         })
             .then(response => {
-                this.setState({user_list: response.data})
+                this.setState({user_list: response.data});
             });
+    }
+
+    handleInputChange(e) {
+        if (e.target.value === "")
+            this.state.posts[e.target.name] = null;
+        else
+            this.state.posts[e.target.name] = e.target.value;
     }
 
     handleSelectChange(selectedOption) {
         this.setState({
             selectedOption: selectedOption
-        })
+        });
+        this.state.posts['paratera_user'] = selectedOption;
     }
 
     onSubmit(e) {
-        var cluster = document.getElementById("cluster").value;
-        var cluster_user = document.getElementById("sc_user").value;
-        var start_day = document.getElementById("start_date").value;
-        var end_day = document.getElementById("end_date").value;
-
-        const data = {
-            cluster: cluster,
-            cluster_user: cluster_user,
-            start_day: start_day,
-            end_day: end_day
-        };
-
         var qs = require('qs');
+        const httpClient = axios.create();
+        httpClient.defaults.timeout = 1000 * 60 * 10;
 
         axios({
             url: this.state.url,
             method: 'post',
-            data: qs.stringify(data),
+            timeout: 1000 * 60 * 10,
+            data: qs.stringify(this.state.posts),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             }
@@ -135,7 +136,7 @@ class CheckForm extends Component {
                             onBlurResetsInput={false}
                             onSelectResetsInput={false}
                             onChange={this.handleSelectChange}
-                            placeholder="Select paratera user ..."
+                            placeholder="select paratera user ..."
                             autoFocus
                             simpleValue
                             clearable={true}
@@ -149,22 +150,26 @@ class CheckForm extends Component {
                 <div className="form-group row">
                     <label htmlFor="cluster" className="col-sm-2 col-form-label">查询超算</label>
                     <div className="col-sm-3">
-                        <input type="text" className="form-control" id="cluster" />
+                        <input type="text" className="form-control" id="cluster" name="cluster"
+                        onChange={this.handleInputChange}/>
                     </div>
                     <label htmlFor="sc_user" className="col-sm-2 col-form-label">查询用户</label>
                     <div className="col-sm-3">
-                        <input type="text" className="form-control" id="sc_user" />
+                        <input type="text" className="form-control" id="sc_user" name="cluster_user"
+                        onChange={this.handleInputChange}/>
                     </div>
                 </div>
 
                 <div className="form-group row">
                     <label htmlFor="start_date" className="col-sm-2 col-form-label">日期范围</label>
                     <div className="col-sm-3">
-                        <input type="text" className="form-control" id="start_date" name="start_date" />
+                        <input type="text" className="form-control" id="start_date" name="start_day"
+                        onChange={this.handleInputChange}/>
                     </div>
                     <label htmlFor="start_date" className="col-sm-2 col-form-label">至</label>
                     <div className="col-sm-3">
-                        <input type="text" className="form-control" id="end_date" name="end_date" />
+                        <input type="text" className="form-control" id="end_date" name="end_day"
+                        onChange={this.handleInputChange}/>
                     </div>
                 </div>
                 <div className="form-group row">
