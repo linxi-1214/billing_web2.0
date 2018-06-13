@@ -20,6 +20,7 @@
     "/api": {
       "target": "http://localhost:8000",
       "secure": false,
+      "timeout": 600000,
       "changeOrigin": true
     }
   },
