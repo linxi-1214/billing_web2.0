@@ -4,21 +4,18 @@
 import { BILL_BASEPATH } from '../constants/api'
 import md5 from 'md5';
 import axios from 'axios';
-
+const qs = require('qs');
 
 export const login = (email, pwd) => {
     let password = md5(pwd);
     return axios(
         {
-            url: BILL_BASEPATH + '/user/login/',
+            url: BILL_BASEPATH + '/user/login',
             method: 'post',
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/x-www-form-urlencoded",
             },
-            data: {
-                username: email,
-                password: password
-            }
+            data: qs.stringify({ username: email, password: password })
         }
     )
 };
@@ -26,7 +23,7 @@ export const login = (email, pwd) => {
 export const logout = () => {
     return axios(
         {
-            url: BILL_BASEPATH + '/user/logout/',
+            url: BILL_BASEPATH + '/user/logout',
             method: 'get'
         }
     )
@@ -35,7 +32,7 @@ export const logout = () => {
 export const pre_login = () => {
     return axios(
         {
-            url: BILL_BASEPATH + '/user/login/',
+            url: BILL_BASEPATH + '/user/login',
             method: 'get',
             headers: {
                 "Content-Type": "application/json"

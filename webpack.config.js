@@ -47,6 +47,7 @@ module.exports = {
         ]
     },
 
+    devtool: 'inline-source-map',
     devServer: {
         port: 3000,
         contentBase: './dist',
@@ -64,7 +65,7 @@ module.exports = {
     },
 
     plugins: [
-        new HtmlWebpackPlugin({template: './public/index.html'}),
+        // new HtmlWebpackPlugin({template: './public/index.html'}),
         new ExtractTextPlugin('style.css'),
         new webpack.DefinePlugin({
 			'process.env': {
