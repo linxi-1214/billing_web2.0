@@ -1,153 +1,119 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import Select from 'react-select';
-import { bindFormRenderer } from 'containers/user/renderer/manager';
+import { bindFormRenderer, queryFormRenderer } from 'containers/user/renderer/manager';
 import 'react-select/dist/react-select.css';
+
+const qs = require('qs');
 
 class QueryForm extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            url: "/api/manager/cpu-check/",
-            user_list: [],
-            selectedOption: ""
+            type_options: [
+                {'label': '组织', 'value': 'group'},
+                {'label': '并行用户', 'value': 'puser'},
+                {'label': '超算用户', 'value': 'cuser'},
+            ],
+            value_options: null,
+            query_type: null, query_value: null,
+            table_data: null,
         };
         this.onSubmit = this.onSubmit.bind(this);
-        this.handleSelectChange = this.handleSelectChange.bind(this);
+        this.handleTypeChange = this.handleTypeChange.bind(this);
+        this.handleValueChange = this.handleValueChange.bind(this);
+        this.changeOptions = this.changeOptions.bind(this);
     }
 
-    componentDidMount() {
+    changeOptions(origin_options, label_name, value_name) {
+        var options = [];
+        if (!(origin_options instanceof Array))
+            Object.keys(origin_options).map(key => {
+                origin_options[key].map(option => {
+                    options.push({
+                        'label': "(" + key + ")" + option[label_name],
+                        'value': "(" + key + ")" + option[value_name]
+                    });
+                });
+            });
+        else
+            options = origin_options.map(option =>{
+                return {'label': option[label_name], 'value': option[value_name]};
+            });
+
+        return options;
+    }
+
+    handleTypeChange(selectedOption) {
+        this.setState({query_type: selectedOption});
+        let url = '/billing/api/group/list';
+        let label_name = 'name', value_name = 'group_id';
+
+        if (selectedOption == 'puser') {
+            url = '/billing/api/user/list';
+            label_name = 'name';
+            value_name = 'user_id';
+        } else if (selectedOption == 'cuser') {
+            url = '/billing/api/cluster/user/list';
+            label_name = 'username';
+            value_name = 'username';
+        }
+
         axios({
-            url: '/api/manager/para-user/list/',
-            method: 'get',
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
+            url: url, method: 'get'
         })
             .then(response => {
-                this.setState({user_list: response.data})
+                this.setState({value_options: this.changeOptions(response.data, label_name, value_name)})
             });
     }
 
-    handleSelectChange(selectedOption) {
-        this.setState({
-            selectedOption: selectedOption
-        })
+    handleValueChange(selectedOption) {
+        this.setState({query_value: selectedOption})
     }
 
     onSubmit(e) {
-        var cluster = document.getElementById("cluster").value;
-        var cluster_user = document.getElementById("sc_user").value;
-        var start_day = document.getElementById("start_date").value;
-        var end_day = document.getElementById("end_date").value;
-
-        const data = {
-            cluster: cluster,
-            cluster_user: cluster_user,
-            start_day: start_day,
-            end_day: end_day
+        let data = {
+            type: this.state.query_type,
+            value: this.state.query_value
         };
 
-        var qs = require('qs');
-
         axios({
-            url: this.state.url,
-            method: 'post',
-            data: qs.stringify(data),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            }
+            url: '/billing/api/user/detail',
+            method: 'get',
+            params: data,
         })
             .then(response => {
-                this.props.onSubmit(response.data);
+                this.setState({table_data: response.data});
             });
 
         e.preventDefault();
     }
 
     render() {
-        const selectedParaUser = this.state.selectedOption;
-        return (
-            <form>
-                <div className="form-group row">
-                    <label htmlFor="cluster" className="col-sm-1 col-form-label">组织</label>
-                    <div className="col-sm-9 input-group-sm">
-                        <Select
-                            id="group-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleSelectChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="paratera_user"
-                            options={this.state.user_list}
-                            value={selectedParaUser}
-                            searchable={true}
-                        />
-                    </div>
-                </div>
-                <div className="form-group row">
-                    <label htmlFor="cluster" className="col-sm-1 col-form-label">并行账号</label>
-                    <div className="col-sm-3 input-group-sm">
-                        <Select
-                            id="para-user-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleSelectChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="paratera_user"
-                            options={this.state.user_list}
-                            value={selectedParaUser}
-                            searchable={true}
-                        />
-                    </div>
-                    <label htmlFor="sc_user" className="col-sm-1 col-form-label">超算</label>
-                    <div className="col-sm-2 input-group-sm">
-                        <Select
-                            id="cluster-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleSelectChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="paratera_user"
-                            options={this.state.user_list}
-                            value={selectedParaUser}
-                            searchable={true}
-                        />
-                    </div>
-                    <label htmlFor="sc_user" className="col-sm-1 col-form-label">用户</label>
-                    <div className="col-sm-2 input-group-sm">
-                        <Select
-                            id="cluster-user-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleSelectChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="paratera_user"
-                            options={this.state.user_list}
-                            value={selectedParaUser}
-                            searchable={true}
-                        />
-                    </div>
-                </div>
-                <div className="form-group row">
-                    <div className="col-sm-10 input-group-sm">
-                        <button type="submit" onClick={this.onSubmit} className="btn btn-outline-primary btn-block">查 询</button>
-                    </div>
-                </div>
-            </form>
-        )
+        return queryFormRenderer.bind(this)()
     }
 }
 
 class BindForm extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {table_data: null};
+        this.fetchGroupInfo = this.fetchGroupInfo.bind(this);
+    }
+
+    fetchGroupInfo (type, value) {
+        let data = {type: type, value: value};
+
+        axios({
+            url: '/billing/api/user/detail',
+            method: 'get',
+            params: data,
+        })
+            .then(response => {
+                this.setState({table_data: response.data});
+            });
+    }
+
     render() {
         return bindFormRenderer.bind(this)()
     }
@@ -162,20 +128,21 @@ class UserManagePills extends Component {
                 <div className="col-2">
                     <div className="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
                          aria-orientation="vertical">
-                        <a className="nav-link active" id="v-pills-home-tab" data-toggle="pill" href="#v-pills-home"
-                           role="tab" aria-controls="v-pills-home" aria-selected="true">绑定查询</a>
-                        <a className="nav-link" id="v-pills-profile-tab" data-toggle="pill" href="#v-pills-profile"
-                           role="tab" aria-controls="v-pills-profile" aria-selected="false">用户绑定</a>
+                        <a className="nav-link active" id="v-pills-query-tab" data-toggle="pill" href="#v-pills-query"
+                           role="tab" aria-controls="v-pills-query" aria-selected="true">绑定查询</a>
+
+                        <a className="nav-link" id="v-pills-bind-tab" data-toggle="pill" href="#v-pills-bind"
+                           role="tab" aria-controls="v-pills-bind" aria-selected="false">用户绑定</a>
                     </div>
                 </div>
                 <div className="col-8">
                     <div className="tab-content" id="v-pills-tabContent">
-                        <div className="tab-pane fade show active" id="v-pills-home" role="tabpanel"
-                             aria-labelledby="v-pills-home-tab">
+                        <div className="tab-pane fade show active" id="v-pills-query" role="tabpanel"
+                             aria-labelledby="v-pills-query-tab">
                              <QueryForm/>
                         </div>
-                        <div className="tab-pane fade" id="v-pills-profile" role="tabpanel"
-                             aria-labelledby="v-pills-profile-tab">
+                        <div className="tab-pane fade" id="v-pills-bind" role="tabpanel"
+                             aria-labelledby="v-pills-bind-tab">
                             <BindForm/>
                         </div>
                     </div>
