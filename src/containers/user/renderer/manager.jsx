@@ -217,9 +217,12 @@ class UserRow extends Component {
                     {user_info.name || 'N/A'}
                     {user_info.is_master_user && (<span><i className={master_class} title="主账号"></i></span>)}
                     {user_info.is_pay_user && (<span><i className={pay_class} title="付费账号"></i></span>)}
-                    <Button color="secondary" size="sm" className="float-right" outline onClick={this.removeUserFromGroup}>
+                    {(this.props.groupId != undefined && this.props.groupId != null) &&
+                    <Button color="secondary" size="sm" className="float-right" outline
+                            onClick={this.removeUserFromGroup}>
                         <span className="fas fa-unlink"></span>
                     </Button>
+                    }
                 </td>
                 }
                 <td>{this.props.clusterUser == null ? 'N/A' : (

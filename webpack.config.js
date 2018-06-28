@@ -9,6 +9,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist/static'),
         filename: 'bundle.js',
 		publicPath: 'static/',
+        chunkFilename: '[name].js'
 
     },
     resolve: {
@@ -53,6 +54,7 @@ module.exports = {
         contentBase: './dist',
         compress: true,
         open: true,
+        hot: true,
         historyApiFallback: true,
         proxy: {
             "/billing/api": {
@@ -66,6 +68,14 @@ module.exports = {
 
     plugins: [
         // new HtmlWebpackPlugin({template: './public/index.html'}),
+        new webpack.optimize.SplitChunksPlugin({
+            chunks: "all",
+            minSize: 20000,
+            minChunks: 1,
+            maxAsyncRequests: 5,
+            maxInitialRequests: 3,
+            name: true
+        }),
         new ExtractTextPlugin('style.css'),
         new webpack.DefinePlugin({
 			'process.env': {

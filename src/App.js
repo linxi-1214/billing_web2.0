@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { BrowserRouter, Route, Redirect } from 'react-router-dom';
 import NavBar from 'containers/navbar';
 import UserManagePills from 'containers/user/manager';
+import NodeInfoPills from 'containers/node/node';
 import Login, { Logout } from 'containers/login/login';
 
 class EnsureHasLoginContainer extends Component {
@@ -26,6 +27,7 @@ class App extends Component {
                     <EnsureHasLoginContainer>
                         <Route path="/customer" component={UserManagePills} />
                         <Route path="/logout" component={Logout} />
+                        <Route path="/node" component={NodeInfoPills} />
                     </EnsureHasLoginContainer>
                 </div>
             </BrowserRouter>
