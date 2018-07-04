@@ -1,0 +1,391 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+.select-option {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.select-option-focused {
+  background-color: rgba(0, 126, 255, 0.1);
+}
+
+.select-option-selected {
+  font-weight: bold;
+}
+
+/*
+datetime picker style
+ */
+/*!
+ * https://github.com/YouCanBookMe/react-datetime
+ */
+
+.rdt {
+  position: relative;
+}
+.rdtPicker {
+  display: none;
+  position: absolute;
+  width: 250px;
+  padding: 4px;
+  margin-top: 7px;
+  z-index: 99999 !important;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    border: 1px solid #ddd;
+  font-family: arial;
+  font-size: 15px;
+  line-height: 1em;
+  border-radius: 4px;
+}
+.rdtOpen .rdtPicker {
+  display: block;
+}
+.rdtStatic .rdtPicker {
+  box-shadow: none;
+  position: static;
+}
+
+.rdtPicker .rdtTimeToggle {
+  text-align: center;
+}
+
+.rdtPicker table {
+  width: 100%;
+  margin: 0;
+}
+.rdtPicker td,
+.rdtPicker th {
+  text-align: center;
+  height: 28px;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 32px;
+  width: 32px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rdtPicker td {
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 32px;
+  width: 32px;
+  height: 24px;
+  line-height: 24px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.rdtPicker td.rdtDay:hover,
+.rdtPicker td.rdtHour:hover,
+.rdtPicker td.rdtMinute:hover,
+.rdtPicker td.rdtSecond:hover,
+.rdtPicker .rdtTimeToggle:hover {
+  background: #eeeeee;
+  cursor: pointer;
+}
+.rdtPicker td.rdtOld,
+.rdtPicker td.rdtNew {
+  color: #999999;
+}
+.rdtPicker td.rdtToday {
+  position: relative;
+}
+.rdtPicker td.rdtToday:before {
+  content: '';
+  display: inline-block;
+  border-left: 7px solid transparent;
+  border-bottom: 7px solid #428bca;
+  border-top-color: rgba(0, 0, 0, 0.2);
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+.rdtPicker td.rdtActive,
+.rdtPicker td.rdtActive:hover {
+  background-color: #428bca;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+.rdtPicker td.rdtActive.rdtToday:before {
+  border-bottom-color: #fff;
+}
+.rdtPicker td.rdtDisabled,
+.rdtPicker td.rdtDisabled:hover {
+  background: none;
+  color: #999999;
+  cursor: not-allowed;
+}
+
+.rdtPicker td span.rdtOld {
+  color: #999999;
+}
+.rdtPicker td span.rdtDisabled,
+.rdtPicker td span.rdtDisabled:hover {
+  background: none;
+  color: #999999;
+  cursor: not-allowed;
+}
+.rdtPicker th {
+  border-bottom: 1px solid #f9f9f9;
+}
+.rdtPicker .dow {
+  width: 14.2857%;
+  border-bottom: none;
+  cursor: default;
+}
+.rdtPicker th.rdtSwitch {
+  width: 100px;
+}
+/*.rdtPicker th.rdtNext,*/
+/*.rdtPicker th.rdtPrev {*/
+  /*font-size: 21px;*/
+  /*vertical-align: top;*/
+/*}*/
+
+.rdtPrev span,
+.rdtNext span {
+  display: none;
+}
+th.rdtPrev:before ,
+th.rdtNext:before {
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Chrome/Safari/Opera */
+  -khtml-user-select: none; /* Konqueror */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  content: '';
+  user-select: none;
+  color: #fff;
+  border: solid black;
+  border-width: 0 2px 2px 0;
+  border-radius: 0;
+  display: inline-block;
+  padding: 3px;
+}
+
+th.rdtPrev:before  {
+  transform: rotate(135deg);
+  -webkit-transform: rotate(135deg);
+}
+th.rdtNext:before  {
+  transform: rotate(-45deg);
+  -webkit-transform: rotate(-45deg);
+}
+
+.rdtPicker:before {
+    left: 9px;
+}
+.rdtPicker:before {
+    top: -7px;
+    border-right: 7px solid transparent;
+    border-left: 7px solid transparent;
+    border-bottom: 7px solid #ccc;
+}
+
+
+.rdtPicker:after {
+    left: 10px;
+}
+.rdtPicker:after {
+    top: -6px;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #fff;
+    border-left: 6px solid transparent;
+}
+
+.rdtPicker:before, .rdtPicker:after {
+    position: absolute;
+    display: inline-block;
+    content: '';
+}
+
+.rdtPicker th.rdtDisabled,
+.rdtPicker th.rdtDisabled:hover {
+  background: none;
+  color: #999999;
+  cursor: not-allowed;
+}
+.rdtPicker thead tr:first-child th {
+  cursor: pointer;
+}
+.rdtPicker thead tr:first-child th:hover {
+  background: #eeeeee;
+}
+
+.rdtPicker tfoot {
+  border-top: 1px solid #f9f9f9;
+}
+
+.rdtPicker button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.rdtPicker button:hover {
+  background-color: #eee;
+}
+
+.rdtPicker thead button {
+  width: 100%;
+  height: 100%;
+}
+
+td.rdtMonth,
+td.rdtYear {
+  height: 50px;
+  width: 25%;
+  cursor: pointer;
+}
+td.rdtMonth:hover,
+td.rdtYear:hover {
+  background: #eee;
+}
+
+.rdtCounters {
+  display: inline-block;
+}
+
+.rdtCounters > div {
+  float: left;
+}
+
+.rdtCounter {
+  height: 100px;
+}
+
+.rdtCounter {
+  width: 40px;
+}
+
+.rdtCounterSeparator {
+  line-height: 100px;
+}
+
+.rdtCounter .rdtBtn {
+  height: 40%;
+  line-height: 40px;
+  cursor: pointer;
+  display: block;
+
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none;   /* Chrome/Safari/Opera */
+  -khtml-user-select: none;    /* Konqueror */
+  -moz-user-select: none;      /* Firefox */
+  -ms-user-select: none;       /* Internet Explorer/Edge */
+  user-select: none;
+}
+.rdtCounter .rdtBtn:hover {
+  background: #eee;
+}
+.rdtCounter .rdtCount {
+  height: 20%;
+  font-size: 1.2em;
+}
+
+.rdtMilli {
+  vertical-align: middle;
+  padding-left: 8px;
+  width: 48px;
+}
+
+.rdtMilli input {
+  width: 100%;
+  font-size: 1.2em;
+  margin-top: 37px;
+}
+
+.rdtTime td {
+  cursor: default;
+}
+
+/*
+Report Style
+
+@media (min-width: 1200px) {
+  .report .report-content {
+    width: 1140px;
+  }
+}
+
+.report .report-content {
+    margin: 0 auto;
+}
+
+.report .report-content .cover {
+  margin: 0 auto;
+  text-align: center;
+  padding-bottom: 60px;
+}
+
+.report .report-content .cover h1 {
+  line-height: 100px;
+  border-bottom: solid 1px #5B9BD5;
+  font-size: 28px;
+  padding: 0;
+  margin: 0;
+}
+
+.report .report-content .author {
+  line-height: 40px;
+  font-weight: normal;
+  padding: 0;
+  margin: 0 0 100px 0;
+}
+
+.report .report-content h4 { font-size: 18px; }
+
+.report .report-content h3 { font-size: 24px; }
+
+.report .report-content .date {
+  line-height: 40px;
+  font-weight: normal;
+  padding: 0;
+  margin: 0 0 50px 0;
+}
+.report .report-content .company {
+  line-height: 40px;
+  padding: 0;
+  margin: 0;
+}
+.report .report-content .company-logo {
+  line-height: 100px;
+  font-size: 28px;
+  padding: 0;
+  margin: 0;
+}
+.report .report-content .directory {
+  padding-bottom: 60px;
+  display: inline-block;
+  width: 100%;
+}
+.report .report-content .directory h1 {
+  text-align: center;
+  padding-bottom: 40px;
+  font-size: 36px;
+}
+.list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+.report .report-content .directory li {
+  line-height: 34px;
+}
+*/

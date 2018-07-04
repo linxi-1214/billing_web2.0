@@ -1,10 +1,9 @@
 import React, {Component} from 'react';
 import axios from 'axios';
-import Select from 'react-select';
 import cookie from 'react-cookies';
-import { Button, Modal, ModalHeader, ModelBody, Label, Input } from 'reactstrap';
-
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Label, Input } from 'reactstrap'
+import {WrappedDateRangePicker, DatePicker} from 'libs/dates';
+import {AsyncSelect} from 'libs/dropdown';
 
 const qs = require('qs');
 const classnames = require('classnames');
@@ -14,81 +13,37 @@ class NullWrapper extends Component {
         return this.props.children;
     }
 }
-class WrapperSelect extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            origin_options: null,
-            option_key: null,
-            selectedOption: ""
-        };
-        this.handleChange = this.handleChange.bind(this);
-        this.changeOptions = this.changeOptions.bind(this);
-    }
 
-    componentDidMount() {
-        axios({
-            url: this.props.url,
-            method: 'get',
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                this.setState({
-                    origin_options: response.data,
-                })
-            });
-    }
+function paraUserSelector(onChange) {
+    const { updateKey, uid } = this.state;
+    return <AsyncSelect id="para-user-select" onChange={onChange} name="uid"
+                        labelKey="name" valueKey="user_id" value={uid} updateKey={updateKey}
+                        url="/billing/api/user/list"
+    />
+}
 
-    changeOptions() {
-        let origin_options = this.state.origin_options;
-        if (this.props.option_key != null && this.state.origin_options != null && this.state.origin_options.hasOwnProperty(this.props.option_key))
-            origin_options = this.state.origin_options[this.props.option_key];
+function clusterUserSelector(onChange) {
+    const { user, updateKey, cluster } = this.state;
+    return <AsyncSelect id="cluster-user-select" onChange={onChange} name="user"
+                        labelKey="username" valueKey="username" updateKey={updateKey}
+                        url={"/billing/api/cluster/user/list?cluster=" + cluster} value={user}
+    />
+}
 
-        if (origin_options == null)
-            return [];
+function clusterSelector(onChange) {
+    const { cluster, updateKey } = this.state;
+    return <AsyncSelect id="cluster-select" name="cluster" onChange={onChange}
+                        labelKey="name" valueKey="name" value={cluster} updateKey={updateKey}
+                        url="/billing/api/cluster/list"
+    />
+}
 
-        if (!(origin_options instanceof Array))
-            return [];
-
-        var options = origin_options.map(option =>{
-            var op = {};
-            Object.keys(option).map(key => {
-                if (key == this.props.labelName)
-                    op['label'] = option[key];
-                if (key == this.props.valueName)
-                    op['value'] = option[key];
-            });
-            return op;
-        });
-
-        return options;
-    }
-
-    handleChange(selectedOption) {
-        this.setState({
-            selectedOption: selectedOption
-        });
-        this.props.onChange(this.props.name, selectedOption);
-    }
-
-    render() {
-        var options = this.changeOptions();
-        return <Select
-            id={this.props.id}
-            onBlurResetsInput={false}
-            onSelectResetsInput={false}
-            onChange={this.handleChange}
-            autoFocus
-            simpleValue
-            clearable={true}
-            name={this.props.name}
-            options={options}
-            value={this.state.selectedOption}
-            searchable={true}
-        />
-    }
+function groupSelector(onChange) {
+    const { gid, updateKey } = this.state;
+    return <AsyncSelect id="group-select" name="gid" onChange={onChange}
+                        labelKey="name" valueKey="group_id" value={gid} updateKey={updateKey}
+                        url="/billing/api/group/list"
+    />
 }
 
 class ClusterUserSelect extends Component {
@@ -100,7 +55,7 @@ class ClusterUserSelect extends Component {
     }
 
     handleClusterChange(state, value) {
-        this.setState({cluster: value});
+        this.setState({cluster: value, updateKey: value});
         this.props.onChange(state, value);
     }
 
@@ -111,18 +66,12 @@ class ClusterUserSelect extends Component {
     render() {
         return (
             <NullWrapper>
-                <label htmlFor="sc_cluster" className="col-sm-1 col-form-label">超算帐号</label>
-                <div className="col-sm-2 input-group-sm">
-                    <WrapperSelect id="cluster-select" name="cluster" onChange={this.handleClusterChange}
-                                   labelName="name" valueName="name"
-                                   url="/billing/api/cluster/list"
-                    />
+                <label htmlFor="sc_cluster" className="col-1 col-form-label">超算帐号</label>
+                <div className="col-2 input-group-sm">
+                    {clusterSelector.bind(this)(this.handleClusterChange)}
                 </div>
-                <div className="col-sm-3 input-group-sm">
-                    <WrapperSelect id="cluster-user-select"  onChange={this.handleChange} name="user"
-                                   labelName="username" valueName="username" option_key={this.state.cluster}
-                                   url="/billing/api/cluster/user/list?for=bind"
-                    />
+                <div className="col-3 input-group-sm">
+                    {clusterUserSelector.bind(this)(this.handleChange)}
                 </div>
             </NullWrapper>
         )
@@ -254,33 +203,44 @@ class UnbindModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      modal: false
+        params: {}
     };
 
     this.toggle = this.toggle.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleValueChange = this.handleValueChange.bind(this);
   }
 
   toggle() {
-    this.setState({
-      modal: !this.state.modal
-    });
+      this.props.toggle()
+  }
+
+  handleValueChange(dtime) {
+      this.state.params['btime'] = dtime;
+      this.setState({params: this.state.params})
+  }
+
+  handleSubmit(event) {
+      this.props.onSubmit(event, this.state.params);
   }
 
   render() {
-    const externalCloseBtn = <button className="close" style={{ position: 'absolute', top: '15px', right: '15px' }} onClick={this.toggle}>&times;</button>;
-    return (
-        <Modal isOpen={this.props.modal} toggle={this.toggle} className={this.props.className} external={externalCloseBtn}>
-          <ModalHeader>{this.props.title}</ModalHeader>
-          <ModalBody>
-            <Label for="unbindTime">Password</Label>
-            <Input type="text" name="btime" id="unbindTime" placeholder="password placeholder" />
-          </ModalBody>
-          <ModalFooter>
-            <Button color="primary" onClick={this.toggle}>{'确 定'}</Button>
-            <Button color="secondary" onClick={this.toggle}>{'取 消'}</Button>
-          </ModalFooter>
-        </Modal>
-    );
+      const externalCloseBtn = <button className="close" style={{position: 'absolute', top: '15px', right: '15px'}}
+                                       onClick={this.toggle}>X</button>;
+      return (
+          <Modal isOpen={this.props.modal} toggle={this.toggle} className={this.props.className}
+                 external={externalCloseBtn}>
+              <ModalHeader>{this.props.title}</ModalHeader>
+              <ModalBody>
+                  <Label for="unbindTime">{this.props.label}</Label>
+                  <DatePicker name="btime" onTimeChange={this.handleValueChange}/>
+              </ModalBody>
+              <ModalFooter>
+                  <Button color="primary" onClick={this.handleSubmit}>{'确 定'}</Button>
+                  <Button color="secondary" onClick={this.toggle}>{'取 消'}</Button>
+              </ModalFooter>
+          </Modal>
+      );
   }
 }
 
@@ -390,10 +350,21 @@ class GroupTable extends Component {
                 </thead>
                 {cluster_user_len <= 1 ?
                     <tbody>
-                    <tr>
-                        <td >{table_data.group.name || 'N/A'}</td>
-                        {total_user_rows.length > 0 ? total_user_rows : (<NullWrapper><td></td><td></td><td></td></NullWrapper>)}
-                    </tr>
+                    {total_user_rows.length == 0 ?
+                        <tr>
+                            <td >{table_data.group.name || 'N/A'}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        :
+                        <NullWrapper>
+                            <tr>
+                                <td rowSpan="2">{table_data.group.name || 'N/A'}</td>
+                            </tr>
+                            {total_user_rows}
+                        </NullWrapper>
+                    }
                     </tbody>
                     :
                     <tbody>
@@ -432,7 +403,7 @@ class AddGroupForm extends Component {
             })
                 .then(response => {
                     if (response.status == '200') {
-                        this.props.onFetchGroupInfo('group', response.data.group_id)
+                        this.props.onFetchGroupInfo('group', {gid: response.data.group_id})
                     }
                 })
         }
@@ -443,11 +414,11 @@ class AddGroupForm extends Component {
         return (
         <form>
             <div className="form-group row p-3 mb-2 bg-light text-black rounded">
-                <label htmlFor="cluster" className="col-sm-1 col-form-label">组织</label>
-                <div className="col-sm-9">
+                <label htmlFor="cluster" className="col-1 col-form-label">组织</label>
+                <div className="col-9">
                     <input type="text" className="form-control" onChange={this.handleChange} id="cluster" aria-describedby="inputGroup-sizing-sm"/>
                 </div>
-                <div className="col-sm-2">
+                <div className="col-2">
                     <button type="submit" onClick={this.handleSubmit} className="btn btn-sm btn-block btn-secondary">添 加</button>
                 </div>
             </div>
@@ -477,9 +448,9 @@ class AddGroupUserForm extends Component {
     handleSelectChange(state, value) {
         this.setState({[state]: value});
         if (state == 'gid')
-            this.props.onFetchGroupInfo('group', value);
+            this.props.onFetchGroupInfo('group', {gid: value});
         if (state == 'uid')
-            this.props.onFetchGroupInfo('puser', value);
+            this.props.onFetchGroupInfo('puser', {uid: value});
     }
 
     handleSubmit(event) {
@@ -497,7 +468,7 @@ class AddGroupUserForm extends Component {
         })
             .then(response => {
                     if (response.status == '200')
-                        this.props.onFetchGroupInfo('group', this.state.gid)
+                        this.props.onFetchGroupInfo('group', {gid: this.state.gid})
                 });
 
         event.preventDefault();
@@ -507,22 +478,16 @@ class AddGroupUserForm extends Component {
         return (
             <form>
                 <div className="form-group row p-3 mb-2 bg-light text-black rounded">
-                    <label htmlFor="cluster" className="col-sm-1 col-form-label">组织</label>
-                    <div className="col-sm-4">
-                        <WrapperSelect  id="group-select" name="gid" onChange={this.handleSelectChange}
-                                        labelName="name" valueName="group_id"
-                                        url="/billing/api/group/list"
-                        />
+                    <label htmlFor="cluster" className="col-1 col-form-label">组织</label>
+                    <div className="col-4">
+                        {groupSelector.bind(this)(this.handleSelectChange)}
                     </div>
-                    <label htmlFor="cluster" className="col-sm-1 col-form-label">并行账号</label>
-                    <div className="col-sm-4">
-                        <WrapperSelect id="para-user-select" onChange={this.handleSelectChange} name="uid"
-                                       labelName="name" valueName="user_id"
-                                       url="/billing/api/user/list"
-                        />
+                    <label htmlFor="cluster" className="col-1 col-form-label">并行账号</label>
+                    <div className="col-4">
+                        {paraUserSelector.bind(this)(this.handleSelectChange)}
                     </div>
 
-                    <div className="col-sm-2">
+                    <div className="col-2">
                         <button type="submit" onClick={this.handleSubmit} className="btn btn-sm btn-block btn-secondary">绑 定</button>
                     </div>
                 </div>
@@ -535,10 +500,11 @@ class AddGroupUserForm extends Component {
 class UserBindForm extends Component {
     constructor(props) {
         super(props);
-        this.state = {uid: null, cluster: null, user: null};
+        this.state = {modal: false, uid: null, cluster: null, user: null};
         this.handleChange = this.handleChange.bind(this);
         this.handleSelectChange = this.handleSelectChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.toggle = this.toggle.bind(this);
     }
 
     handleChange(event) {
@@ -552,52 +518,75 @@ class UserBindForm extends Component {
     handleSelectChange(state, value) {
         this.setState({[state]: value});
         if (state == 'uid')
-            this.props.onFetchGroupInfo('puser', value);
+            this.props.onFetchGroupInfo('puser', {uid: value});
         if (state == 'user')
-            this.props.onFetchGroupInfo('cuser', "(" + this.state.cluster + ")" + value);
+            this.props.onFetchGroupInfo('cuser', {cluster: this.state.cluster, user: value});
     }
 
-    handleSubmit(event) {
+    toggle(event) {
+        this.setState({modal: !this.state.modal});
+        event.preventDefault();
+    }
+
+    handleSubmit(event, other_params) {
+        const data = {
+            uid: this.state.uid,
+            cluster: this.state.cluster,
+            username: this.state.user,
+            csrfmiddlewaretoken: cookie.load('csrftoken')
+        };
+
+        Object.keys(other_params).map(key => {
+            data[key] = other_params[key]
+        });
         axios({
             url: '/billing/api/user/binding',
             method: 'post',
-            data: qs.stringify({
-                uid: this.state.uid,
-                cluster: this.state.cluster,
-                username: this.state.user,
-                csrfmiddlewaretoken: cookie.load('csrftoken')
-            }),
+            data: qs.stringify(data),
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
         })
             .then(response => {
                 if (response.status == '200') {
-                    this.props.onFetchGroupInfo('puser', this.state.uid)
+                    this.props.onFetchGroupInfo('puser', {uid: this.state.uid})
                 }
             });
-
+        this.toggle(event);
         event.preventDefault();
     }
     render() {
         return (
             <form>
                 <div className="form-group row p-3 mb-2 bg-light text-black rounded">
-                    <label htmlFor="cluster" className="col-sm-1 col-form-label">并行账号</label>
-                    <div className="col-sm-3">
-                        <WrapperSelect id="para-user-select" onChange={this.handleSelectChange} name="uid"
-                                       labelName="name" valueName="user_id"
-                                       url="/billing/api/user/list"
-                        />
+                    <label htmlFor="cluster" className="col-1 col-form-label">并行账号</label>
+                    <div className="col-3">
+                        {paraUserSelector.bind(this)(this.handleSelectChange)}
                     </div>
                     <ClusterUserSelect onChange={this.handleSelectChange}/>
-                    <div className="col-sm-2">
-                        <button type="submit" onClick={this.handleSubmit} className="btn btn-sm btn-block btn-secondary">绑 定</button>
+                    <div className="col-2">
+                        <button type="submit" onClick={this.toggle} className="btn btn-sm btn-block btn-secondary">绑 定</button>
                     </div>
                 </div>
+                <UnbindModal title="请选择绑定时间" toggle={this.toggle} modal={this.state.modal}  label="绑定时间" onSubmit={this.handleSubmit}/>
             </form>
         )
     }
+}
+
+function querySelector() {
+    const { query_type } = this.state;
+    switch(query_type) {
+        case 'group':
+            return <div className="col-6">{groupSelector.bind(this)(this.handleValueChange)}</div>;
+        case 'puser':
+            return <div className="col-6">{paraUserSelector.bind(this)(this.handleValueChange)}</div>;
+        case 'cuser':
+            return <ClusterUserSelect onChange={this.handleValueChange} />;
+        default:
+            return <div className="col-6">{groupSelector.bind(this)(this.handleValueChange)}</div>;
+    }
+
 }
 
 export function bindFormRenderer() {
@@ -619,38 +608,15 @@ export function queryFormRenderer() {
         <NullWrapper>
             <form>
                 <div className="form-group row">
-                    <label className="col-sm-1 col-form-label">查询</label>
-                    <div className="col-sm-2">
-                        <Select
-                            id="query-type-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleTypeChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="query_type"
-                            options={this.state.type_options}
-                            value={this.state.query_type}
-                            searchable={true}
+                    <label className="col-1 col-form-label">查询</label>
+                    <div className="col-2">
+                        <AsyncSelect id="query-type-select" onChange={this.handleTypeChange} name="query_type"
+                                     url={null} options={this.state.type_options}
                         />
+
                     </div>
-                    <div className="col-sm-5">
-                        <Select
-                            id="query-value-select"
-                            onBlurResetsInput={false}
-                            onSelectResetsInput={false}
-                            onChange={this.handleValueChange}
-                            autoFocus
-                            simpleValue
-                            clearable={true}
-                            name="query_value"
-                            options={this.state.value_options}
-                            value={this.state.query_value}
-                            searchable={true}
-                        />
-                    </div>
-                    <div className="col-sm-2">
+                    { querySelector.bind(this)() }
+                    <div className="col-2">
                         <button type="submit" onClick={this.onSubmit} className="btn btn-outline-primary btn-block">查 询</button>
                     </div>
                 </div>

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { nodeStateRenderer, nodePendRenderer, nodeUtilizationRenderer } from 'containers/node/renderer/node';
-import 'react-select/dist/react-select.css';
 
 class StateChart extends Component {
     constructor(props) {

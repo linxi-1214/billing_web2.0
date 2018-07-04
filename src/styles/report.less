@@ -1,0 +1,193 @@
+.report {
+    font-size: 14px;
+    .floatbar{
+        .item:nth-child(1){
+            display:none;
+        }
+    }
+    h4 {font-size: 18px;}
+    .queryform {
+        margin: 0 auto;
+        padding: 0 20px;
+
+        .control-label {
+            text-align: left;
+        }
+    }
+    .report-content {
+        margin: 0 auto;
+        .floatbar .item:nth-child(1){
+            display:none;
+        }
+        .cover {
+            margin:0 auto;
+            text-align:center;
+            padding-bottom: 60px;
+
+            h1 {
+                line-height:100px;
+                border-bottom:solid 1px #5B9BD5;
+                font-size:28px;
+                padding:0;
+                margin:0;
+            }
+            h4 {font-size: 18px;}
+            h3 {font-size: 24px;}
+        }
+
+        .author {
+            line-height:40px;
+            font-weight:normal;
+            padding:0;
+            margin:0 0 200px 0;
+        }
+
+        .module-group {
+            padding-bottom: 60px;
+            display:inline-block;
+            width:100%;
+        }
+
+        .module-item {
+            padding-bottom: 40px;
+            display:inline-block;
+            width:100%;
+            >ul>li{
+                padding-bottom: 20px;
+            }
+        }
+
+        .date {
+            line-height:40px;
+            font-weight:normal;
+            padding:0;
+            margin:0 0 50px 0;
+        }
+
+        .company {
+            line-height:40px;
+            padding:0;
+            margin:0;
+        }
+
+        .company-logo {
+            line-height:100px;
+            font-size:28px;
+            padding:0;
+            margin:0;
+        }
+
+        .directory {
+            padding-bottom: 60px;
+            display: inline-block;
+            width: 100%;
+            li {
+                line-height: 34px;
+            }
+            h1 {
+                text-align: center;
+                padding-bottom: 40px;
+                font-size: 36px;
+            }
+            h4, .h4 {
+                font-size: 18px;
+            }
+
+            h4, .h4, h5, .h5, h6, .h6 {
+                margin-top: 10px;
+                margin-bottom: 10px;
+            }
+            a {
+                color: #337ab7;
+                text-decoration: none;
+            }
+        }
+
+        .content ul.list-unstyled {
+            padding-left: 0;
+            display:inline-block;
+            width:100%;
+            >li {
+                line-height: 34px;
+            }
+            h1, .h1, h2, .h2, h3, .h3 {
+                margin-top: 20px;
+                margin-bottom: 10px;
+            }
+            h3 { font-size: 24px;}
+            h4 { font-size: 18px;}
+        }
+
+        .linechart {
+            height: 600px;
+        }
+
+        .piechart, .barchart {
+            height: 250px;
+        }
+
+        .table {
+            margin-top: 20px;
+            th, td{
+                word-wrap: break-word;
+            }
+        }
+
+        .recharge_title{
+            font-size: 18px;
+            text-align: center;
+            color: #008acd;
+        }
+
+        .nodata {
+            text-align: center;
+        }
+
+        .text-primary {
+            color:#337ab7
+        }
+
+        .text-warning {
+            color:#f0ad4e
+        }
+
+        @media (max-width: 768px){
+            .content ul.list-unstyled{
+                margin-left: 0;
+            }
+        }
+
+        @media print {
+            .floatbar {
+                display: none;
+                position: static;
+            }
+        }
+
+        .diskTitle,.diskDayTitle{
+            font-size: 22px;
+            color:#008acd;
+            margin:30px 0;
+            text-align: center;
+            //font-weight: bold,
+        }
+
+        ul.diskDayList{
+            text-align: center;
+            li{
+                display: inline-block;
+                width:25%;
+            }
+        }
+    }
+
+    @media (min-width: 1200px){
+        .queryform, .report-content {
+            width: 1140px;
+        }
+
+        .content ul{
+            margin-left: 0;
+        }
+    }
+}

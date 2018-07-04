@@ -1,15 +1,12 @@
 import React, {Component} from 'react';
 import axios from 'axios';
-import Select from 'react-select';
-import cookie from 'react-cookies';
 import ReactEcharts from 'echarts-for-react';
 import { Button, Modal, ModalHeader, ModelBody, Label, Input, Form, FormGroup, Col } from 'reactstrap';
-import DateRangePicker from 'react-bootstrap-daterangepicker';
-
-import 'bootstrap-daterangepicker/daterangepicker.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { WrappedDateRangePicker } from 'libs/dates';
+import { AsyncSelect } from 'libs/dropdown';
 
 const qs = require('qs');
+const moment = require('moment');
 const classnames = require('classnames');
 
 function formatter(params) {
@@ -40,83 +37,6 @@ class NullWrapper extends Component {
         return this.props.children;
     }
 }
-class WrapperSelect extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            origin_options: null,
-            option_key: null,
-            selectedOption: ""
-        };
-        this.handleChange = this.handleChange.bind(this);
-        this.changeOptions = this.changeOptions.bind(this);
-    }
-
-    componentDidMount() {
-        axios({
-            url: this.props.url,
-            method: 'get',
-            headers: {
-                "Content-Type": "application/json"
-            }
-        })
-            .then(response => {
-                this.setState({
-                    origin_options: response.data,
-                })
-            });
-    }
-
-    changeOptions() {
-        let origin_options = this.state.origin_options;
-        if (this.props.option_key != null && this.state.origin_options != null && this.state.origin_options.hasOwnProperty(this.props.option_key))
-            origin_options = this.state.origin_options[this.props.option_key];
-
-        if (origin_options == null)
-            return [];
-
-        if (!(origin_options instanceof Array))
-            return [];
-
-        var options = origin_options.map(option =>{
-            var op = {};
-            Object.keys(option).map(key => {
-                if (key == this.props.labelName)
-                    op['label'] = option[key];
-                if (key == this.props.valueName)
-                    op['value'] = option[key];
-            });
-            return op;
-        });
-
-        return options;
-    }
-
-    handleChange(selectedOption) {
-        this.setState({
-            selectedOption: selectedOption
-        });
-        this.props.onChange(this.props.name, selectedOption);
-    }
-
-    render() {
-        var options = this.changeOptions();
-        return <Select
-            id={this.props.id}
-            onBlurResetsInput={false}
-            onSelectResetsInput={false}
-            onChange={this.handleChange}
-            autoFocus
-            simpleValue
-            clearable={true}
-            name={this.props.name}
-            options={options}
-            className={this.props.className}
-            value={this.state.selectedOption}
-            searchable={true}
-        />
-    }
-}
 
 class ClusterPartitionSelect extends Component {
     constructor(props) {
@@ -139,15 +59,15 @@ class ClusterPartitionSelect extends Component {
         return (
             <NullWrapper>
                 <div className="col">
-                <WrapperSelect id="cluster-select" name="cluster" onChange={this.handleClusterChange}
-                               labelName="name" valueName="name"
-                               url="/billing/api/cluster/list"
+                <AsyncSelect id="cluster-select" name="cluster" onChange={this.handleClusterChange}
+                             labelKey="name" valueKey="name"
+                             url="/billing/api/cluster/list"
                 />
                 </div>
                 <div className="col">
-                <WrapperSelect id="cluster-partition-select"  onChange={this.handleChange} name="partition"
-                               labelName="partition" valueName="partition" option_key={this.state.cluster}
-                               url={"/billing/api/cluster/partition/list?cluster=" + this.state.cluster + "&theme=" + this.props.theme + "&item=" + this.props.item}
+                <AsyncSelect id="cluster-partition-select"  onChange={this.handleChange} name="partition"
+                             labelKey="partition" valueKey="partition" updateKey={this.state.cluster}
+                             url={"/billing/api/cluster/partition/list?cluster=" + this.state.cluster + "&theme=" + this.props.theme + "&item=" + this.props.item}
                 />
                 </div>
             </NullWrapper>
@@ -160,16 +80,14 @@ class TimeSelect extends Component {
     constructor(props) {
         super(props);
         let now = new Date();
-        let end = [now.getFullYear(), now.getMonth() + 1, now.getDate()].join('-');
-        let start_time = new Date(now.getTime() - 86400 * 1000);
-        let start = [start_time.getFullYear(), start_time.getMonth() + 1, start_time.getDate()].join('-');
+        let momentObj = moment(now);
+        let end = momentObj.format('YYYY-MM-DD');
+        let start = momentObj.subtract(1, 'days').format('YYYY-MM-DD');
         this.state = {
             btn_selected: '1',
-            date_range: [start, end].join(' ~ '),
             start: start, end: end
         };
         this.handleTimeButtonClick = this.handleTimeButtonClick.bind(this);
-        this.handleDateEvent = this.handleDateEvent.bind(this);
         this.handleClusterPartitionChange = this.handleClusterPartitionChange.bind(this);
     }
 
@@ -181,32 +99,18 @@ class TimeSelect extends Component {
 
         if (time_range != 'all') {
             let now = new Date();
-            end = [now.getFullYear(), now.getMonth() + 1, now.getDate()].join('-');
-            let start_time = new Date(now.getTime() - parseInt(time_range) * 86400 * 1000);
-            start = [start_time.getFullYear(), start_time.getMonth() + 1, start_time.getDate()].join('-');
+            let momentObj = moment(now);
+            end = momentObj.format('YYYY-MM-DD');
+            start = momentObj.subtract(parseInt(time_range), 'days').format('YYYY-MM-DD');
         } else {
             start = null;
             end = null;
         }
 
-        this.setState({
-            btn_selected: time_range,
-            start: start, end: end,
-            date_range: [start, end].join(' ~ ')
-        });
+        this.setState({btn_selected: time_range, start: start, end: end });
         this.props.onTimeChange(start, end);
 
         event.preventDefault();
-    }
-
-    handleDateEvent(event, picker) {
-        this.setState({
-            date_range: [picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD')].join(picker.locale.separator),
-            start: picker.startDate.format('YYYY-MM-DD'),
-            end: picker.endDate.format('YYYY-MM-DD'),
-            btn_selected: null
-        });
-        this.props.onTimeChange(picker.startDate.format('YYYY-MM-DD'), picker.endDate.format('YYYY-MM-DD'))
     }
 
     handleClusterPartitionChange(state, value) {
@@ -219,48 +123,15 @@ class TimeSelect extends Component {
                 <div className="form-row">
                     <div className="col-4">
                         <Label className="mr-sm-2">时间</Label>
-                        {this.state.btn_selected == '1' ?
-                            <Button color="primary" value="1" className="ml-5" onClick={this.handleTimeButtonClick}>今天</Button>
-                            :
-                            <Button color="primary" value="1" outline className="ml-5" onClick={this.handleTimeButtonClick}>今天</Button>
-                        }
-                        {this.state.btn_selected == '7' ?
-                            <Button color="primary" value="7" className="ml-3" onClick={this.handleTimeButtonClick}>7天</Button>
-                            :
-                            <Button color="primary" value="7" className="ml-3" outline onClick={this.handleTimeButtonClick}>7天</Button>
-                        }
-                        {this.state.btn_selected == '30' ?
-                            <Button color="primary" value="30" className="ml-3" onClick={this.handleTimeButtonClick}>30天</Button>
-                            :
-                            <Button color="primary" value="30" className="ml-3" outline onClick={this.handleTimeButtonClick}>30天</Button>
-                        }
-                        {this.state.btn_selected == 'all' ?
-                            <Button color="primary" value="all" className="ml-3" onClick={this.handleTimeButtonClick}>全部</Button>
-                            :
-                            <Button color="primary" value="all" className="ml-3" outline onClick={this.handleTimeButtonClick}>全部</Button>
-                        }
+                        <Button color="primary" value="1" className={classnames("ml-5", {'btn-outline-primary': this.state.btn_selected != '1'})} onClick={this.handleTimeButtonClick}>今天</Button>
+                        <Button color="primary" value="7" className={classnames("ml-3", {'btn-outline-primary': this.state.btn_selected != '7'})} onClick={this.handleTimeButtonClick}>7天</Button>
+                        <Button color="primary" value="30" className={classnames("ml-3", {'btn-outline-primary': this.state.btn_selected != '30'})} onClick={this.handleTimeButtonClick}>30天</Button>
+                        <Button color="primary" value="all" className={classnames("ml-3", {'btn-outline-primary': this.state.btn_selected != 'all'})} onClick={this.handleTimeButtonClick}>全部</Button>
                     </div>
                     <div className="col-3">
-                        <DateRangePicker
-                            startDate={this.state.start}
-                            endDate={this.state.end}
-                            autoApply={true}
-                            onEvent={this.handleDateEvent}
-                            containerStyles={{display: 'inline-block', width: '100%'}}
-                            locale={{
-                                format: "YYYY-MM-DD",
-                                separator: " ~ ",
-                                fromLabel: "From",
-                                toLabel: "To",
-                                customRangeLabel: "Custom",
-                                weekLabel: "W",
-                                daysOfWeek: ["日", "一", "二", "三", "四", "五", "六"],
-                                monthNames: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-                                firstDay: 1
-                            }}
-                        >
-                            <Input type="text" disabled value={this.state.date_range} name="email" className="ml-2 bg-white" placeholder="起讫时间" />
-                        </DateRangePicker>
+                        <WrappedDateRangePicker onTimeChange={this.props.onTimeChange}
+                                                start={this.state.start} end={this.state.end}
+                                                className="ml-2 bg-white"/>
                     </div>
                     <div className="col-1 mt-1 ml-auto">
                     <Label className="mr-sm-2">超算/节点</Label>
@@ -271,8 +142,8 @@ class TimeSelect extends Component {
                                 <ClusterPartitionSelect theme={this.props.theme} item={this.props.item}
                                                         onChange={this.handleClusterPartitionChange}/>
                                 :
-                                <WrapperSelect id="cluster-select" name="cluster"
-                                               labelName="name" valueName="name"
+                                <AsyncSelect id="cluster-select" name="cluster"
+                                               labelKey="name" valueKey="name"
                                                url="/billing/api/cluster/list"
                                                onChange={this.handleClusterPartitionChange}
                                 />
@@ -352,7 +223,7 @@ class LineChart extends Component {
                     start: 0,
                     end: 100,
                     handleIcon: 'M0 0 L30 0 L30 150 L 0 150 Z',
-                    handleSize: '90%',
+                    handleSize: '100%',
                     handleStyle: {
                         color: '#6c757d',
                         shadowBlur: 1,

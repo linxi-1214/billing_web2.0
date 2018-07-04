@@ -3,15 +3,18 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 var webpack = require('webpack');
 var path = require('path');
 
+const extractCSS = new ExtractTextPlugin('style.css');
+
 module.exports = {
     entry: path.resolve(__dirname, 'src/index.js'),
     output: {
         path: path.resolve(__dirname, 'dist/static'),
         filename: 'bundle.js',
-		publicPath: 'static/',
+		publicPath: '/static/',
         chunkFilename: '[name].js'
 
     },
+    mode: 'development',
     resolve: {
         modules: [
             "node_modules",
@@ -20,16 +23,26 @@ module.exports = {
         extensions: [".js", ".json", ".jsx", ".css"],
         alias: {
             containers: path.resolve(__dirname, 'src/containers'),
-            actions: path.resolve(__dirname, 'src/actions')
+            actions: path.resolve(__dirname, 'src/actions'),
+            libs: path.resolve(__dirname, 'src/libs'),
+            images: path.resolve(__dirname, 'src/images'),
+            css: path.resolve(__dirname, 'src/styles')
         }
     },
     module: {
         rules: [
             {
                 test: /\.css$/,
-                use: ExtractTextPlugin.extract({
+                use: extractCSS.extract({
                     fallback: 'style-loader',
                     use: 'css-loader'
+                })
+            },
+            {
+                test: /\.less$/,
+                use: extractCSS.extract({
+                    fallback: 'style-loader',
+                    use: ['css-loader', 'less-loader']
                 })
             },
             {
@@ -42,7 +55,18 @@ module.exports = {
                     }
                 },
                 exclude: [
-                    path.join(__dirname, '../node_modules')
+                    path.join(__dirname, 'node_modules')
+                ]
+            },
+            {
+                test: /\.(ico|svg|png|jpg|gif)$/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            outputPath: 'images',
+                        }
+                    }
                 ]
             }
         ]
@@ -76,7 +100,7 @@ module.exports = {
             maxInitialRequests: 3,
             name: true
         }),
-        new ExtractTextPlugin('style.css'),
+        extractCSS,
         new webpack.DefinePlugin({
 			'process.env': {
 				// Useful to reduce the size of client-side libraries, e.g. react

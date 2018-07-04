@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import { bindFormRenderer, queryFormRenderer } from 'containers/user/renderer/manager';
-import 'react-select/dist/react-select.css';
 
 const qs = require('qs');
 
@@ -14,67 +13,35 @@ class QueryForm extends Component {
                 {'label': '并行用户', 'value': 'puser'},
                 {'label': '超算用户', 'value': 'cuser'},
             ],
-            value_options: null,
-            query_type: null, query_value: null,
+            query_type: null,
+            query_value: {},
             table_data: null,
         };
         this.onSubmit = this.onSubmit.bind(this);
         this.handleTypeChange = this.handleTypeChange.bind(this);
         this.handleValueChange = this.handleValueChange.bind(this);
-        this.changeOptions = this.changeOptions.bind(this);
     }
 
-    changeOptions(origin_options, label_name, value_name) {
-        var options = [];
-        if (!(origin_options instanceof Array))
-            Object.keys(origin_options).map(key => {
-                origin_options[key].map(option => {
-                    options.push({
-                        'label': "(" + key + ")" + option[label_name],
-                        'value': "(" + key + ")" + option[value_name]
-                    });
-                });
-            });
-        else
-            options = origin_options.map(option =>{
-                return {'label': option[label_name], 'value': option[value_name]};
-            });
-
-        return options;
+    handleTypeChange(name, selectedValue) {
+        this.setState({
+            updateKey: selectedValue,
+            query_type: selectedValue,
+        });
     }
 
-    handleTypeChange(selectedOption) {
-        this.setState({query_type: selectedOption});
-        let url = '/billing/api/group/list';
-        let label_name = 'name', value_name = 'group_id';
-
-        if (selectedOption == 'puser') {
-            url = '/billing/api/user/list';
-            label_name = 'name';
-            value_name = 'user_id';
-        } else if (selectedOption == 'cuser') {
-            url = '/billing/api/cluster/user/list';
-            label_name = 'username';
-            value_name = 'username';
-        }
-
-        axios({
-            url: url, method: 'get'
-        })
-            .then(response => {
-                this.setState({value_options: this.changeOptions(response.data, label_name, value_name)})
-            });
-    }
-
-    handleValueChange(selectedOption) {
-        this.setState({query_value: selectedOption})
+    handleValueChange(name, selectedValue) {
+        this.state.query_value[name] = selectedValue;
+        this.setState({query_value: this.state.query_value})
     }
 
     onSubmit(e) {
         let data = {
-            type: this.state.query_type,
-            value: this.state.query_value
+            type: this.state.query_type
         };
+
+        Object.keys(this.state.query_value).map(key => {
+            data[key] = this.state.query_value[key]
+        });
 
         axios({
             url: '/billing/api/user/detail',
@@ -102,7 +69,11 @@ class BindForm extends Component {
     }
 
     fetchGroupInfo (type, value) {
-        let data = {type: type, value: value};
+        let data = {type: type};
+
+        Object.keys(value).map(key => {
+            data[key] = value[key]
+        });
 
         axios({
             url: '/billing/api/user/detail',
