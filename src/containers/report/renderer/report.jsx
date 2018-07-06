@@ -2,10 +2,11 @@ import React, {Component} from 'react'
 import axios from 'axios'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import { reportModules } from 'containers/report/modules'
-import {LineChart, VBarChart} from 'libs/charts'
+import {LineChart, VBarChart, HBarChart} from 'libs/charts'
 
 import logoUrl from 'images/paratera.svg'
 
+const moment = require('moment');
 
 const URLSearchParams = require('url-search-params');
 const chineseIndex = ['一', '二', '三', '四', '五'];
@@ -13,6 +14,11 @@ const reportTypes = { days: '日', months: '月', years: '年' };
 const contractTypes = {'Stored': '预付费', 'Duration': '包时长', 'Node': '包节点'};
 const businessTypes = {'Machine-Time': '机时合同', 'Disk': '磁盘合同'};
 
+class NullWrapper extends Component {
+    render() {
+        return this.props.children;
+    }
+}
 
 class CircleProgress extends Component {
     constructor(props) {
@@ -41,7 +47,7 @@ class Directory extends Component {
                         reportModules.map((item, i) => {
                             if (item.key != '3' || (item.key == '3' && isShowJobStat)) {
                                 return (
-                                    <li key={i}>
+                                    <li key={item.key}>
                                         <h4>
                                             {chineseIndex[i]}、
                                             <a href={'#module' + item.key}>{item.label}</a>
@@ -49,7 +55,7 @@ class Directory extends Component {
                                         <ol>
                                             {item.children.map((item, i) => {
                                                 return (
-                                                    <li key={i}>
+                                                    <li key={item.key}>
                                                         <a href={'#module' + item.key}>{item.label}</a>
                                                     </li>
                                                 )
@@ -86,17 +92,13 @@ function renderBody() {
 
 function renderModules(modules) {
     return modules.map(function (item, i) {
-
-        let label = item['label'];
-        if (item['name'] == 'detail_cpu') {
-            label += '(' + this.state.reportDateRange + ')'
-        } else if (item['key'] == '3_2' && this.state.users.length <= 1) {
+        if (item['key'] == '3_2' && this.state.users.length <= 1) {
             return
         }
         return (
             <li className="module-item" key={i}>
                 <a id={'module' + item.key}></a>
-                <h3>{i + 1}. {label} </h3>
+                <h3>{i + 1}. {item.label} </h3>
                 {renderModuleItem.call(this, item)}
             </li>
         )
@@ -105,13 +107,18 @@ function renderModules(modules) {
 
 function renderModuleItem(module) {
     let {uid, start, end} = this.state;
+    let month = moment(end).format('YYYY-MM');
     switch (module.name) {
         case 'overview_contract':
             return <ContractRecord uid={uid}/>;
         case 'overview_cpu':
             return <CPUUsageBar uid={uid} start={start} end={end} />;
+        case 'detail_cpu':
+            return <FlowingList uid={uid} month={month} onlyThisYear={0} />;
+        case 'detail_cpu_bar':
+            return <FlowingListBar uid={uid} month={month} onlyThisYear={0} />;
         default:
-            return <ContractRecord uid={uid}/>;
+            return null;
 
         // case '2_1':
         //     return renderSection2_1.call(this);
@@ -154,7 +161,7 @@ class ContractRecord extends Component {
             </div>
         );
         let table = Object.keys(contractRecord).map((business, ind) => {
-                return <div>
+                return <div key={business + ind}>
                     <h4>{String.fromCharCode(97 + ind) + '. ' + businessTypes[business]}</h4>
                     <table className="table table-sm table-bordered">
                         <thead>
@@ -171,7 +178,7 @@ class ContractRecord extends Component {
                         <tbody>
                         {
                             contractRecord[business].contract_list && contractRecord[business].contract_list.map((record, i) =>
-                                <tr key={ind + '_' + i}>
+                                <tr key={business + ind + '-' + i}>
                                     <td>{record.contract_number}</td>
                                     <td>{contractTypes[record.type]}</td>
                                     <td>{(record.amount / 100).toFixed(2)}</td>
@@ -211,7 +218,7 @@ function formatter(params) {
     return yuan;
 }
 
-//2.1 总机时情况
+//1.2 总机时情况
 class CPUUsageBar extends Component {
     constructor(props) {
         super(props);
@@ -223,86 +230,236 @@ class CPUUsageBar extends Component {
         let data = {uid: uid, start: start, end: end};
 
         return (
-            <div className="shadow-sm p-3 mb-5 bg-white rounded mt-5">
-                <LineChart title={"费用总览"} yAxisName={"元"} formatter={formatter}
-                           url="/billing/api/usage/overview" requestData={data}
+            <div className="shadow-sm p-3 bg-white rounded mt-5">
+                <VBarChart title={"费用总览"} yAxisName={"元"} formatter={formatter}
+                           url="/billing/api/user/usage/overview" requestData={data}
                 />
             </div>
         )
     }
 }
 
-//2.2 用户使用机时情况
-function renderSection2_2() {
-    const { users } = this.state
-    return users.map((user, i) => (
-        <ReportLine
-            ref={'module_reportbar_2_2_' + (i + 1)}
-            key={i}
-            style={{ height: 300 }}
-            chartTitle={user.username + '(' + (sccMap[user.center] || user.center) + ')'}
-            xLabelKey="displayDate"
-            valFmtType="time_h"
-            yName="核时"
-            tooltip={true}
-            legend={true}
-            series={user.usedPerDaySeries}
-            data={user.usedPerDay} />
-    ))
+function monthCostRow(time_key, month_data) {
+    let month_length = Object.keys(month_data).length;
+    let has_contract = true;
+    if (month_data.contract <= 0) {
+        month_length -= 1;
+        has_contract = false;
+    }
+    if (month_length == 1)
+        month_length = 2;
+
+    return (
+        <NullWrapper>
+            <tr>
+                <td rowSpan={month_length}>{time_key}</td>
+            </tr>
+            {has_contract && (
+                <tr>
+                    <td colSpan="3" className="text-success text-right pr-3 pt-2x"> <h4>+{month_data.contract}</h4></td>
+                </tr>
+            )}
+            {Object.keys(month_data).map(_uk => {
+                    if (_uk == 'balance' || _uk == 'contract') {
+                        return null;
+                    }
+                    return (
+                        <tr>
+                            <td>{_uk}</td>
+                            <td>{month_data[_uk].costCpu}</td>
+                            <td className="text-danger text-right pr-3">-{month_data[_uk].costMoney}</td>
+                        </tr>
+                    )
+                }
+            )}
+            <tr>
+                <td colSpan="4" className="font-weight-bold">当前结余：{month_data.balance}</td>
+            </tr>
+        </NullWrapper>
+    )
 }
 
-//2.3 磁盘使用情况
-function renderSection2_3() {
-    const { reportType } = this.props.location.query
-    let {
-        diskUsed,
-        diskInfo,
-        diskSeries
-    } = this.state
-    return (
-        <div>
-            <div className="row" ref='module_reportbar_2_3_1'>
-                {diskInfo.length > 0 ?
-                    <ReportBar2
-                        //ref='module_reportbar_2_3_1'
-                        chartTitle="磁盘容量使用情况"
-                        style={{ height: 350 }}
-                        xLabelKey={["partition", "username"]}
-                        fmtType="flow_mb"
-                        xName="分区名称"
-                        yName="容量/GB"
-                        tooltip={true}
-                        legend={true}
-                        series={diskSeries}
-                        data={diskInfo} />
-                    :
-                    <div>
-                        <div className="diskTitle">磁盘容量使用情况</div>
-                        <div style={{ "textAlign": "center" }}>暂无数据</div>
-                    </div>
-                }
+// 流水单表格
+class FlowingListTable extends Component {
+    constructor(props) {
+        // Example:
+        // this.state.data = {
+        //     "initBalance": 0,
+        //     "2018-04-30": {
+        //         "balance": 0,
+        //         "paratera_14": {
+        //             "costMoney": 0,
+        //             "costCpu": 174648
+        //         },
+        //         "contract": 0
+        //     },
+        //     "2018-06-30": {
+        //         "balance": 29167648,
+        //         "paratera_14": {
+        //             "costMoney": 15252,
+        //             "costCpu": 0
+        //         },
+        //         "contract": 29182900
+        //     }
+        // }
+        super(props);
+        this.state = {
+            data: null
+        }
+    }
 
-            </div>
-            <div className="row" ref='module_reportbar_2_3_2'>
-                <div className="diskDayTitle">各个业务单磁盘天数使用情况(天)</div>
-                {diskUsed.length > 0 ?
-                    <ul className="list-unstyled diskDayList">
-                        {diskUsed.map((disk, i) => {
+    componentDidMount() {
+        let data = {uid: this.props.uid, month: this.props.month, oty: this.props.onlyThisYear};
+        axios({
+            url: '/billing/api/user/flowing-list',
+            method: 'get',
+            params: data
+        })
+            .then(response => {
+                this.setState({data: response.data});
+            });
+    }
+
+    render() {
+        const { data } = this.state;
+
+        return (
+            <table className="table table-bordered table-sm table-hover">
+                <thead>
+                    <tr>
+                    <th>截止日期</th>
+                    <th>用户</th>
+                    <th>当月使用机时</th>
+                    <th>机时费明细（元)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {data == null ?
+                    <tr>
+                        <td colSpan="4">
+                            <div className="position-relative container p-5">
+                                <CircleProgress size={40}/>
+                            </div>
+                        </td>
+                    </tr>
+                    :
+                    Object.keys(data).map(_k => {
+                        if (_k == "initBalance") {
                             return (
-                                <li key={i}>
-                                    <ReportPie1
-                                        style={{ height: 250 }}
-                                        chartTitle="磁盘天数"
-                                        data={diskUsed[i]}
-                                    />
-                                </li>
+                                <tr>
+                                    <td colSpan="4" className="font-weight-bold">当前结余：{data[_k]}</td>
+                                </tr>
                             )
-                        })}
-                    </ul> :
-                    <div style={{ "textAlign": "center" }}>暂无数据</div>}
+                        } else {
+                            return monthCostRow(_k, data[_k])
+                        }
+                    })
+                }
+                {data != null && Object.keys(data).length == 0 && <tr><td colSpan="4" className="text-center font-italic">目前没有消费</td></tr>}
+                </tbody>
+            </table>
+        )
+    }
+}
+
+//2.1 机时流水单
+class FlowingList extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        return (
+            <div>
+                <FlowingListTable {...this.props} />
             </div>
-        </div>
-    )
+        )
+    }
+}
+
+//2.2 机时使用图例
+class FlowingListBar extends Component {
+    constructor(props) {
+        // Example:
+        // this.state.data = {
+        //     "initBalance": 0,
+        //     "2018-04-30": {
+        //         "balance": 0,
+        //         "paratera_14": {
+        //             "costMoney": 0,
+        //             "costCpu": 174648
+        //         },
+        //         "contract": 0
+        //     },
+        //     "2018-06-30": {
+        //         "balance": 29167648,
+        //         "paratera_14": {
+        //             "costMoney": 15252,
+        //             "costCpu": 0
+        //         },
+        //         "contract": 29182900
+        //     }
+        // }
+        super(props);
+        this.state = {
+            data: {}
+        }
+    }
+
+    parseData(origin_data) {
+        // Example of origin_data:
+        // {
+        //     "initBalance": 0,
+        //     "2018-04-30": {
+        //         "balance": 0,
+        //         "paratera_14": {
+        //             "costMoney": 0,
+        //             "costCpu": 174648
+        //         },
+        //         "contract": 0
+        //     },
+        //     "2018-06-30": {
+        //         "balance": 29167648,
+        //         "paratera_14": {
+        //             "costMoney": 15252,
+        //             "costCpu": 0
+        //         },
+        //         "contract": 29182900
+        //     }
+        // }
+
+        let _dataSet = [];
+        let _states = ['date'];
+        Object.keys(origin_data).map(_tk => {
+            if (_tk == "initBalance")
+                return;
+
+            let _data = {"date": _tk};
+            Object.keys(origin_data[_tk]).map(_uk => {
+                if (_uk == 'balance' || _uk == 'contract')
+                    return;
+                _data[_uk] = origin_data[_tk][_uk].costCpu;
+                if (_states.indexOf(_uk) == -1)
+                    _states.push(_uk);
+            });
+            _dataSet.push(_data);
+        });
+
+        return {"dataset": _dataSet, "states": _states}
+    }
+
+    render() {
+        let data = {uid: this.props.uid, month: this.props.month, oty: this.props.onlyThisYear};
+
+        return (
+            <div className="shadow-sm p-3 bg-white rounded mt-5">
+                <HBarChart title={"用户机时使用"} yAxisName={"核时"} stack="cputime"
+                           url="/billing/api/user/flowing-list" requestData={data}
+                           parseFunc={this.parseData} grid={{top: '20%'}}
+                />
+            </div>
+        )
+    }
 }
 
 //3.1 作业统计

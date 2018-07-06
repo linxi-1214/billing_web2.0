@@ -1231,8 +1231,14 @@ Report Style
 .report .report-content .directory li {
   line-height: 34px;
 }
-*/.report .floatbar .item:nth-child(1) {
+*/.report {
+  font-size: 14px;
+}
+.report .floatbar .item:nth-child(1) {
   display: none;
+}
+.report h4 {
+  font-size: 18px;
 }
 .report .queryform {
   margin: 0 auto;
@@ -1259,13 +1265,19 @@ Report Style
   padding: 0;
   margin: 0;
 }
+.report .report-content .cover h4 {
+  font-size: 18px;
+}
+.report .report-content .cover h3 {
+  font-size: 24px;
+}
 .report .report-content .author {
   line-height: 40px;
   font-weight: normal;
   padding: 0;
   margin: 0 0 200px 0;
 }
-.report .report-content .module-gourp {
+.report .report-content .module-group {
   padding-bottom: 60px;
   display: inline-block;
   width: 100%;
@@ -1295,9 +1307,6 @@ Report Style
   padding: 0;
   margin: 0;
 }
-.report .report-content .company-logo img {
-  width: 290px;
-}
 .report .report-content .directory {
   padding-bottom: 60px;
   display: inline-block;
@@ -1309,6 +1318,24 @@ Report Style
 .report .report-content .directory h1 {
   text-align: center;
   padding-bottom: 40px;
+  font-size: 36px;
+}
+.report .report-content .directory h4,
+.report .report-content .directory .h4 {
+  font-size: 18px;
+}
+.report .report-content .directory h4,
+.report .report-content .directory .h4,
+.report .report-content .directory h5,
+.report .report-content .directory .h5,
+.report .report-content .directory h6,
+.report .report-content .directory .h6 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.report .report-content .directory a {
+  color: #337ab7;
+  text-decoration: none;
 }
 .report .report-content .content ul.list-unstyled {
   padding-left: 0;
@@ -1317,6 +1344,21 @@ Report Style
 }
 .report .report-content .content ul.list-unstyled > li {
   line-height: 34px;
+}
+.report .report-content .content ul.list-unstyled h1,
+.report .report-content .content ul.list-unstyled .h1,
+.report .report-content .content ul.list-unstyled h2,
+.report .report-content .content ul.list-unstyled .h2,
+.report .report-content .content ul.list-unstyled h3,
+.report .report-content .content ul.list-unstyled .h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+.report .report-content .content ul.list-unstyled h3 {
+  font-size: 24px;
+}
+.report .report-content .content ul.list-unstyled h4 {
+  font-size: 18px;
 }
 .report .report-content .linechart {
   height: 600px;

@@ -21,18 +21,18 @@ const data = [
 	{
 		key: '2',
 		name: 'detail',
-		label: '机时使用详情',
+		label: '使用详情',
 		children: [
 			{
 				key: '2_1',
 				name: 'detail_cpu',
-				label: '用户使用机时情况',
+				label: '机时流水单',
 				selected: true
 			},
 			{
 				key: '2_2',
-				name: 'detail_disk',
-				label: '磁盘使用情况',
+				name: 'detail_cpu_bar',
+				label: '机时使用图例',
 				selected: true
 			}
 		]

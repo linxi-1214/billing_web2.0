@@ -13,6 +13,7 @@ class ReportForm extends Component {
             uid: null,
             start: null,
             end: null,
+            month: null, onlyThisYear: 0,
             reportType: 'months',
         };
         this.handleUserChange = this.handleUserChange.bind(this);
@@ -26,7 +27,9 @@ class ReportForm extends Component {
     }
 
     handleTimeChange(start, end) {
-        this.setState({start: start, end: end});
+        if (this.state.reportType == 'months')
+            this.state.month = moment(start).format('%Y-%m');
+        this.setState({start: start, end: end, month: this.state.month});
     }
 
     handleTimeButtonClick(event) {
@@ -43,6 +46,7 @@ class ReportForm extends Component {
                 rt: this.state.reportType,
                 st: startTime,
                 et: endTime,
+                oty: this.state.onlyThisYear
             });
         this.context.router.history.push({
             pathname: '/report/detail',
